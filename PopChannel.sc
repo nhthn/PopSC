@@ -91,8 +91,11 @@ PopDrumLoop {
 				}
 				{ character == $x } {
 					1
+				}
+				{ "\n\t ".includes(character) } {
+					\ignore
 				};
-			}, Array);
+			}, Array).select { |x| x != \ignore };
 		};
 		synthDef = argSynthDef;
 	}
@@ -116,15 +119,17 @@ PopMelody {
 	var pattern;
 	var synthDef;
 	var octave;
+	var hasGate;
 
-	*new { |channel, synthDef, pattern, octave|
-		^super.new.init(channel, pattern, synthDef, octave);
+	*new { |channel, synthDef, pattern, octave, hasGate = false|
+		^super.new.init(channel, pattern, synthDef, octave, hasGate);
 	}
 
-	init { |argChannel, argPattern, argSynthDef, argOctave|
+	init { |argChannel, argPattern, argSynthDef, argOctave, argHasGate|
 		channel = argChannel;
 		pattern = argPattern;
 		octave = argOctave;
+		hasGate = argHasGate;
 		if(pattern.isKindOf(String)) {
 			pattern = pattern.collectAs({ |character|
 				case
@@ -136,19 +141,39 @@ PopMelody {
 				}
 				{ character == $x } {
 					1
+				}
+				{ character == $- } {
+					\sustain
+				}
+				{ "\n\t ".includes(character) } {
+					\ignore
 				};
-			}, Array);
+			}, Array).select { |x| x != \ignore };
 		};
 		synthDef = argSynthDef;
 	}
 
 	play { |song|
+		var synth;
 		loop {
 			pattern.do { |degree|
-				if (degree.notNil) {
-					Server.default.makeBundle(Server.default.latency, {
-						channel.synth(synthDef, [freq: song.degreeToFreq(degree, octave)]);
-					});
+				if (degree.isNil) {
+					if (hasGate and: { synth.notNil }) {
+						Server.default.makeBundle(Server.default.latency, {
+							synth.set(\gate, 0);
+							synth = nil;
+						});
+					};
+				} {
+					if (degree != \sustain) {
+						Server.default.makeBundle(Server.default.latency, {
+							if (hasGate and: { synth.notNil }) {
+								synth.set(\gate, 0);
+								synth = nil;
+							};
+							synth = channel.synth(synthDef, [freq: song.degreeToFreq(degree, octave)]);
+						});
+					};
 				};
 				song.tatum.wait;
 			};
