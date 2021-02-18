@@ -73,12 +73,11 @@ PopDrumLoop {
 	var pattern;
 	var synthDef;
 
-	*new { |channel, synthDef, pattern|
-		^super.new.init(channel, pattern, synthDef);
+	*new { |synthDef, pattern|
+		^super.new.init(pattern, synthDef);
 	}
 
-	init { |argChannel, argPattern, argSynthDef|
-		channel = argChannel;
+	init { |argPattern, argSynthDef|
 		pattern = argPattern;
 		if(pattern.isKindOf(String)) {
 			pattern = pattern.collectAs({ |character|
@@ -100,7 +99,7 @@ PopDrumLoop {
 		synthDef = argSynthDef;
 	}
 
-	play { |song|
+	play { |song, channel|
 		loop {
 			pattern.do { |probability|
 				if (probability.coin) {
@@ -115,18 +114,16 @@ PopDrumLoop {
 }
 
 PopMelody {
-	var channel;
 	var pattern;
 	var synthDef;
 	var octave;
 	var hasGate;
 
-	*new { |channel, synthDef, pattern, octave, hasGate = false|
-		^super.new.init(channel, pattern, synthDef, octave, hasGate);
+	*new { |synthDef, pattern, octave, hasGate = false|
+		^super.new.init(pattern, synthDef, octave, hasGate);
 	}
 
-	init { |argChannel, argPattern, argSynthDef, argOctave, argHasGate|
-		channel = argChannel;
+	init { |argPattern, argSynthDef, argOctave, argHasGate|
 		pattern = argPattern;
 		octave = argOctave;
 		hasGate = argHasGate;
@@ -153,7 +150,7 @@ PopMelody {
 		synthDef = argSynthDef;
 	}
 
-	play { |song|
+	play { |song, channel|
 		var synth;
 		loop {
 			pattern.do { |degree|
